@@ -1,4 +1,4 @@
-# devops-static-site
+# DevOps-Static-Site
 
 A fully automated “static site” deployment pipeline on DigitalOcean, powered by Terraform, Ansible and Jenkins.
 
