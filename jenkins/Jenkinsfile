@@ -1,12 +1,6 @@
 pipeline {
     agent any
-
-    triggers {
-        // every 5 minutes
-        cron('H/5 * * * *')
-    }
-
-    stages {
+     stages {
         stage('Fetch Index File') {
             steps {
                 // ensure workspace directory exists
@@ -27,18 +21,18 @@ pipeline {
                     publishers: [
                         sshPublisherDesc(
                             // match the "Name" of your SSH site config in Jenkins
-                            configName: 'VPS Deployment',
+                            configName: 'ozgecmis.online',
                             transfers: [
                                 sshTransfer(
                                     // just the one file
                                     sourceFiles:      'site/index.html',
                                     removePrefix:     'site',
                                     // your Apache docroot path
-                                    remoteDirectory:  '/var/www/html/cv',
+                                    remoteDirectory:  '/var/www/html/',
                                     // adjust perms & reload Apache
                                     execCommand: '''
-                                        chmod 644 /var/www/html/cv/index.html
-                                        systemctl reload httpd.service
+                                        chmod 644 /var/www/html/index.html
+                                        systemctl restart httpd.service
                                     '''
                                 )
                             ],
