@@ -70,6 +70,7 @@ All infrastructure as code (IaC) and configuration management is stored in this 
                                                             │
                                                             └──> Jenkins Pipeline ──> Deploy site (index.html)
 ```
+---
 ## Getting Started
 
 1. Register Your Domain
@@ -113,9 +114,9 @@ In your registrar’s dashboard, point the NS records to your future BIND server
    Run site/index.html deployment
 
    Reload Apache if necessary
-
-   
+---
 ## Repository Layout
+```plaintext
 devops-static-site/
 ├── iac
 │   ├── DG_droplet.tf         # Terraform definitions for DigitalOcean droplet
@@ -132,6 +133,6 @@ devops-static-site/
 │   └── index.html            # Your static website’s homepage
 ├── LICENSE                   # Project license
 └── README.md                 # This file
-
+```
 ## License
 This project is licensed under the MIT License.
