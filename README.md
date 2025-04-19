@@ -68,8 +68,7 @@ All infrastructure as code (IaC) and configuration management is stored in this 
                                                ├─ Jenkins (CI)
                                                └─ Service Restarts
                                                             │
-                                                            └──> Jenkins Pipeline ──> Deploy site (index.html)
----
+                                                            └──> Jenkins Pipeline ──> Deploy site (index.html)```
 ## Getting Started
 1. Register Your Domain
 Log in to GoDaddy (or your preferred registrar).
