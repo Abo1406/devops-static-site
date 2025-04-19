@@ -3,10 +3,10 @@ pipeline {
      stages {
         stage('Fetch Index File') {
             steps {
-                // ensure workspace directory exists
+                
                 sh 'mkdir -p site'
 
-                // pull via HTTP
+                
                 sh '''
                     curl -sSf \
                       -o site/index.html \
@@ -20,23 +20,23 @@ pipeline {
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
-                            // match the "Name" of your SSH site config in Jenkins
+                            
                             configName: 'ozgecmis.online',
                             transfers: [
                                 sshTransfer(
-                                    // just the one file
+                                    
                                     sourceFiles:      'site/index.html',
                                     removePrefix:     'site',
-                                    // your Apache docroot path
+                                    
                                     remoteDirectory:  '/var/www/html/',
-                                    // adjust perms & reload Apache
+                                    
                                     execCommand: '''
                                         chmod 644 /var/www/html/index.html
-                                        systemctl restart httpd.service
+                                        systemctl restart httpd
                                     '''
                                 )
                             ],
-                            // you can leave promotion flags off
+                    
                             usePromotionTimestamp:    false,
                             useWorkspaceInPromotion:  false,
                             verbose:                  true
