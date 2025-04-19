@@ -1,0 +1,65 @@
+pipeline {
+    agent any
+
+    triggers {
+        // every 5 minutes
+        cron('H/5 * * * *')
+    }
+
+    stages {
+        stage('Fetch Index File') {
+            steps {
+                // ensure workspace directory exists
+                sh 'mkdir -p site'
+
+                // pull via HTTP
+                sh '''
+                    curl -sSf \
+                      -o site/index.html \
+                      http://raw.githubusercontent.com/Abo1406/devops-static-site/main/site/index.html
+                '''
+            }
+        }
+
+        stage('Deploy to HTTPD') {
+            steps {
+                sshPublisher(
+                    publishers: [
+                        sshPublisherDesc(
+                            // match the "Name" of your SSH site config in Jenkins
+                            configName: 'VPS Deployment',
+                            transfers: [
+                                sshTransfer(
+                                    // just the one file
+                                    sourceFiles:      'site/index.html',
+                                    removePrefix:     'site',
+                                    // your Apache docroot path
+                                    remoteDirectory:  '/var/www/html/cv',
+                                    // adjust perms & reload Apache
+                                    execCommand: '''
+                                        chmod 644 /var/www/html/cv/index.html
+                                        systemctl reload httpd.service
+                                    '''
+                                )
+                            ],
+                            // you can leave promotion flags off
+                            usePromotionTimestamp:    false,
+                            useWorkspaceInPromotion:  false,
+                            verbose:                  true
+                        )
+                    ]
+                )
+            }
+        }
+    }
+
+    post {
+        success {
+            slackSend(color: 'good', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
+        }
+        failure {
+            slackSend(color: 'danger', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
+        }
+    }
+}
+

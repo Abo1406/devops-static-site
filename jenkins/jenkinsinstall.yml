@@ -1,0 +1,42 @@
+---
+- name: Install Jenkins on RedHat/CentOS using shell module
+  hosts: webserver
+  become: true
+
+  tasks:
+    - name: Download Jenkins repo file
+      ansible.builtin.shell: |
+        wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+
+    - name: Import Jenkins GPG key
+      ansible.builtin.shell: |
+        rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+    - name: Upgrade all packages
+      ansible.builtin.shell: |
+        yum -y upgrade
+
+    - name: Install required dependencies
+      ansible.builtin.shell: |
+        yum -y install fontconfig java-21-openjdk
+
+    - name: Install Jenkins
+      ansible.builtin.shell: |
+        yum -y install jenkins
+
+    - name: Reload systemd daemon
+      ansible.builtin.shell: |
+        systemctl daemon-reload
+
+    - name: Enable Jenkins
+      ansible.builtin.shell: |
+        systemctl enable --now jenkins
+
+    - name: Display User Password
+      ansible.builtin.shell: |
+        cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_passwd
+ 
+    - name: Show Jenkins Password
+      ansible.builtin.debug:
+        msg: "Jenkins Initial Password: {{ jenkins_passwd.stdout }}"       
