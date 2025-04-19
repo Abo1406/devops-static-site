@@ -82,7 +82,7 @@ In your registrar’s dashboard, point the NS records to your future BIND server
 
 2. Provision Infrastructure with Terraform
    
-   git clone https://github.com/your‑username/devops-static-site.git
+   git clone https://github.com/abo1406/devops-static-site.git
    cd devops-static-site/iac
    export DIGITALOCEAN_TOKEN=your_do_token
    terraform init
