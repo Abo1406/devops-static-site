@@ -1,0 +1,22 @@
+- name: Install Apache and DNS Server
+  hosts: webserver
+  gather_facts: yes
+  tasks:
+    - name: Install Bind
+      ansible.builtin.yum:
+        name: bind
+        state: present
+    - name: Install Apache Httpd
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+    - name: Enable and start Http
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: yes
+    - name: Enable and start DNS Server
+      ansible.builtin.service:
+        name: named
+        state: started
+        enabled: yes

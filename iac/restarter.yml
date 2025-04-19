@@ -1,0 +1,15 @@
+- name: Restart HTTPD
+  hosts: webserver
+  tasks:
+    - name: Restart HTTP
+      ansible.builtin.service:
+        name: httpd
+        state: restarted
+
+- name: Restart DNS Server
+  hosts: webserver
+  tasks:
+    - name: Restart DNS
+      ansible.builtin.service:
+        name: named
+        state: restarted

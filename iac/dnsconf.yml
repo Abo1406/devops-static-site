@@ -1,0 +1,43 @@
+- name: Configuration DNS files
+  hosts: webserver
+  gather_facts: yes
+  become: yes
+  tasks:
+    - name: Configure named.conf file
+      ansible.builtin.blockinfile:
+        path: /etc/named.conf
+        marker: "# {mark} ANSIBLE MANAGED ZONE BLOCK"
+        block: |
+          zone "ozgecmis.online" IN {
+            type master;
+            file "/var/named/db.ozgecmis.online";
+          };
+
+    - name: Create db.ozgecmis.online file
+      ansible.builtin.file:
+        path: /var/named/db.ozgecmis.online
+        state: touch
+        owner: named
+        group: named
+        mode: '0644'
+
+    - name: Configure db.ozgecmis.online zone file
+      ansible.builtin.blockinfile:
+        path: /var/named/db.ozgecmis.online
+        block: |
+          @       IN      SOA     ns1.ozgecmis.online. root.mail.ozgecmis.online. (
+                          1     ; Serial
+                          3600  ; Refresh
+                          1800  ; Retry
+                          604800 ; Expire
+                          86400 ; Minimum TTL
+          )
+          @       IN      NS      ns1.ozgecmis.online.
+          ns1     IN      A       207.154.209.16
+          mail    IN      MX 10   mail.ozgecmis.online.
+          ozgecmis.online. IN A   207.154.209.16
+          www     IN      A       207.154.209.16
+          mail    IN      A       207.154.209.16
+          ozgecmis.online. IN TXT "v=spf1 mx ~all"
+
+
