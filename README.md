@@ -69,8 +69,9 @@ All infrastructure as code (IaC) and configuration management is stored in this 
                                                └─ Service Restarts
                                                             │
                                                             └──> Jenkins Pipeline ──> Deploy site (index.html)
-```plaintext
+```
 ## Getting Started
+
 1. Register Your Domain
 Log in to GoDaddy (or your preferred registrar).
 
@@ -79,3 +80,58 @@ Purchase and note the domain name (e.g. example.com).
 In your registrar’s dashboard, point the NS records to your future BIND server (you’ll update these after provisioning).
 
 2. Provision Infrastructure with Terraform
+   
+   git clone https://github.com/your‑username/devops-static-site.git
+   cd devops-static-site/iac
+   export DIGITALOCEAN_TOKEN=your_do_token
+   terraform init
+   terraform apply -auto-approve
+   This will create a DigitalOcean droplet and output its public IP.
+
+3.  Bootstrap Servers with Ansible
+    Update inventory.yml (in iac/) with the droplet’s IP.
+
+    Run the installer playbook:
+    ansible-playbook -i iac/inventory.yml iac/installer.yml
+    This will install Apache, BIND, Jenkins, and any required dependencies.
+
+    Restart all services:
+    ansible-playbook -i iac/inventory.yml iac/restarter.yml
+4. Configure DNS & HTTP
+   ansible-playbook -i iac/inventory.yml iac/dnsconf.yml
+
+
+5. Configure Jenkins Pipeline
+   Log into your Jenkins UI at http://<droplet-ip>:8080.
+
+   Create a new pipeline job, point to this repository, and use the provided Jenkinsfile.
+
+   On each Git push, Jenkins will:
+
+   Checkout the repo
+
+   Run site/index.html deployment
+
+   Reload Apache if necessary
+
+   
+## Repository Layout
+devops-static-site/
+├── iac
+│   ├── DG_droplet.tf         # Terraform definitions for DigitalOcean droplet
+│   ├── dnsconf.yml           # Ansible playbook to push BIND zone file
+│   ├── installer.yml         # Ansible playbook to install Apache, BIND, Jenkins
+│   ├── inventory.yml         # Ansible inventory (hosts)
+│   ├── passwd.yml            # (Optional) secret vault for user credentials
+│   ├── restarter.yml         # Ansible playbook to restart services
+│   ├── terraform.tfstate*    # Terraform state files (auto-generated)
+├── jenkins
+│   ├── Jenkinsfile           # Declarative pipeline for site deployment
+│   └── jenkinsinstall.yml    # Ansible role/play to install Jenkins
+├── site
+│   └── index.html            # Your static website’s homepage
+├── LICENSE                   # Project license
+└── README.md                 # This file
+
+## License
+This project is licensed under the MIT License.
