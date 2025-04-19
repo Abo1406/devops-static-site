@@ -1,2 +1,2 @@
 [webserver]
-207.154.209.16 ansible_user=root ansible_ssh_pass=123456 ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+207.154.209.16 ansible_user=root ansible_ssh_pass=**** ansible_ssh_common_args='-o StrictHostKeyChecking=no'
