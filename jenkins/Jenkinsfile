@@ -1,59 +1,52 @@
 pipeline {
     agent any
     stages {
-        stage('Fetch Index File') {
+        stage('Fetch and Deploy Index File') {
             steps {
-                // Create directory
-                sh 'mkdir -p site'
+                // Create directory for the web content
+                sh 'mkdir -p /var/www/html'
                 
-                // Use git to get the file instead of curl
+                // Clone the repository to get the index.html file
                 sh '''
                     git clone https://github.com/Abo1406/devops-static-site.git temp
+                    
+                    # Try to find index.html in different possible locations
                     if [ -f temp/site/index.html ]; then
-                        cp temp/site/index.html site/
+                        sudo cp temp/site/index.html /var/www/html/index.html
                     elif [ -f temp/index.html ]; then
-                        cp temp/index.html site/
+                        sudo cp temp/index.html /var/www/html/index.html
                     else
-                        echo "index.html not found in repository"
-                        ls -la temp/
-                        exit 1
+                        echo "Listing repository contents to find the index.html file:"
+                        find temp -name "*.html" -type f
+                        
+                        # If we find any HTML file, use the first one
+                        FOUND_HTML=$(find temp -name "*.html" -type f | head -1)
+                        if [ -n "$FOUND_HTML" ]; then
+                            sudo cp "$FOUND_HTML" /var/www/html/index.html
+                        else
+                            echo "No HTML files found in the repository"
+                            exit 1
+                        fi
                     fi
+                    
+                    # Set proper permissions
+                    sudo chmod 644 /var/www/html/index.html
+                    
+                    # Restart httpd service
+                    sudo systemctl restart httpd || sudo service httpd restart
+                    
+                    # Clean up
                     rm -rf temp
                 '''
-            }
-        }
-        stage('Deploy to HTTPD') {
-            steps {
-                sshPublisher(
-                    publishers: [
-                        sshPublisherDesc(
-                            configName: 'ozgecmis.online',
-                            transfers: [
-                                sshTransfer(
-                                    sourceFiles: 'site/index.html',
-                                    removePrefix: 'site',
-                                    remoteDirectory: '/var/www/html',
-                                    execCommand: '''
-                                        sudo chmod 644 /var/www/html/index.html
-                                        sudo systemctl restart httpd
-                                    '''
-                                )
-                            ],
-                            usePromotionTimestamp: false,
-                            useWorkspaceInPromotion: false,
-                            verbose: true
-                        )
-                    ]
-                )
             }
         }
     }
     post {
         success {
-            echo "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+            echo "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' completed successfully"
         }
         failure {
-            echo "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+            echo "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' failed"
         }
     }
 }
