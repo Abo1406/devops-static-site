@@ -1,52 +1,45 @@
 pipeline {
     agent any
-     stages {
+    stages {
         stage('Fetch Index File') {
             steps {
-                
+                // Create directory
                 sh 'mkdir -p site'
-
                 
+                // Fetch the file using HTTPS instead of HTTP
                 sh '''
                     curl -sSf \
                       -o site/index.html \
-                      http://raw.githubusercontent.com/Abo1406/devops-static-site/main/site/index.html
+                      https://raw.githubusercontent.com/Abo1406/devops-static-site/main/site/index.html
                 '''
             }
         }
-
         stage('Deploy to HTTPD') {
             steps {
                 sshPublisher(
                     publishers: [
                         sshPublisherDesc(
-                            
                             configName: 'ozgecmis.online',
                             transfers: [
                                 sshTransfer(
-                                    
-                                    sourceFiles:      'site/index.html',
-                                    removePrefix:     'site',
-                                    
-                                    remoteDirectory:  '/var/www/html/',
-                                    
+                                    sourceFiles: 'site/index.html',
+                                    removePrefix: 'site',
+                                    remoteDirectory: '/var/www/html',  // Removed trailing slash
                                     execCommand: '''
-                                        chmod 644 /var/www/html/index.html
-                                        systemctl restart httpd
+                                        sudo chmod 644 /var/www/html/index.html
+                                        sudo systemctl restart httpd
                                     '''
                                 )
                             ],
-                    
-                            usePromotionTimestamp:    false,
-                            useWorkspaceInPromotion:  false,
-                            verbose:                  true
+                            usePromotionTimestamp: false,
+                            useWorkspaceInPromotion: false,
+                            verbose: true
                         )
                     ]
                 )
             }
         }
     }
-
     post {
         success {
             slackSend(color: 'good', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
@@ -56,4 +49,3 @@ pipeline {
         }
     }
 }
-
