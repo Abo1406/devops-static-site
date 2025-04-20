@@ -6,11 +6,19 @@ pipeline {
                 // Create directory
                 sh 'mkdir -p site'
                 
-                // Fetch the file using HTTPS instead of HTTP
+                // Use git to get the file instead of curl
                 sh '''
-                    curl -sSf \
-                      -o site/index.html \
-                      https://raw.githubusercontent.com/Abo1406/devops-static-site/main/site/index.html
+                    git clone https://github.com/Abo1406/devops-static-site.git temp
+                    if [ -f temp/site/index.html ]; then
+                        cp temp/site/index.html site/
+                    elif [ -f temp/index.html ]; then
+                        cp temp/index.html site/
+                    else
+                        echo "index.html not found in repository"
+                        ls -la temp/
+                        exit 1
+                    fi
+                    rm -rf temp
                 '''
             }
         }
@@ -24,7 +32,7 @@ pipeline {
                                 sshTransfer(
                                     sourceFiles: 'site/index.html',
                                     removePrefix: 'site',
-                                    remoteDirectory: '/var/www/html',  // Removed trailing slash
+                                    remoteDirectory: '/var/www/html',
                                     execCommand: '''
                                         sudo chmod 644 /var/www/html/index.html
                                         sudo systemctl restart httpd
@@ -42,10 +50,10 @@ pipeline {
     }
     post {
         success {
-            slackSend(color: 'good', message: "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
+            echo "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
         }
         failure {
-            slackSend(color: 'danger', message: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'")
+            echo "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
         }
     }
 }
