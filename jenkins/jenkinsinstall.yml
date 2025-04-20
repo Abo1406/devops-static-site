@@ -1,42 +1,52 @@
 ---
-- name: Install Jenkins on RedHat/CentOS using shell module
+- name: Install Jenkins on RedHat/CentOS using native modules
   hosts: webserver
   become: true
 
   tasks:
-    - name: Download Jenkins repo file
-      ansible.builtin.shell: |
-        wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+    - name: Add Jenkins YUM repo
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+        mode: '0644'
 
     - name: Import Jenkins GPG key
-      ansible.builtin.shell: |
-        rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
 
-    - name: Upgrade all packages
-      ansible.builtin.shell: |
-        yum -y upgrade
+    - name: Upgrade all packages to latest
+      ansible.builtin.yum:
+        name: '*'
+        state: latest
 
     - name: Install required dependencies
-      ansible.builtin.shell: |
-        yum -y install fontconfig java-21-openjdk
+      ansible.builtin.yum:
+        name:
+          - fontconfig
+          - java-21-openjdk
+        state: present
 
-    - name: Install Jenkins
-      ansible.builtin.shell: |
-        yum -y install jenkins
+    - name: Install Jenkins package
+      ansible.builtin.yum:
+        name: jenkins
+        state: present
 
     - name: Reload systemd daemon
-      ansible.builtin.shell: |
-        systemctl daemon-reload
+      ansible.builtin.systemd:
+        daemon_reload: yes
 
-    - name: Enable Jenkins
-      ansible.builtin.shell: |
-        systemctl enable --now jenkins
+    - name: Ensure Jenkins is enabled and running
+      ansible.builtin.service:
+        name: jenkins
+        enabled: yes
+        state: started
 
-    - name: Display User Password
-      ansible.builtin.shell: |
-        cat /var/lib/jenkins/secrets/initialAdminPassword
-      register: jenkins_passwd
- 
-    - name: Show Jenkins Password
+    - name: Read Jenkins initial admin password
+      ansible.builtin.slurp:
+        src: /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_passwd_raw
+
+    - name: Show Jenkins initial admin password
       ansible.builtin.debug:
-        msg: "Jenkins Initial Password: {{ jenkins_passwd.stdout }}"       
+        msg: "{{ (jenkins_passwd_raw.content | b64decode).strip() }}"
