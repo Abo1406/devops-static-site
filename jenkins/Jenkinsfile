@@ -1,52 +1,35 @@
 pipeline {
     agent any
+
     stages {
-        stage('Fetch and Deploy Index File') {
+        stage('Deploy index.html') {
             steps {
-                // Create directory for the web content
-                sh 'mkdir -p /var/www/html'
-                
-                // Clone the repository to get the index.html file
                 sh '''
+                    # Clone the repo
                     git clone https://github.com/Abo1406/devops-static-site.git temp
-                    
-                    # Try to find index.html in different possible locations
-                    if [ -f temp/site/index.html ]; then
-                        sudo cp temp/site/index.html /var/www/html/index.html
-                    elif [ -f temp/index.html ]; then
-                        sudo cp temp/index.html /var/www/html/index.html
-                    else
-                        echo "Listing repository contents to find the index.html file:"
-                        find temp -name "*.html" -type f
-                        
-                        # If we find any HTML file, use the first one
-                        FOUND_HTML=$(find temp -name "*.html" -type f | head -1)
-                        if [ -n "$FOUND_HTML" ]; then
-                            sudo cp "$FOUND_HTML" /var/www/html/index.html
-                        else
-                            echo "No HTML files found in the repository"
-                            exit 1
-                        fi
-                    fi
-                    
-                    # Set proper permissions
+
+                    # Copy index.html to the web root
+                    sudo cp temp/site/index.html /var/www/html/index.html
+
+                    # Set correct permissions
                     sudo chmod 644 /var/www/html/index.html
-                    
-                    # Restart httpd service
+
+                    # Restart the web server
                     sudo systemctl restart httpd || sudo service httpd restart
-                    
+
                     # Clean up
                     rm -rf temp
                 '''
             }
         }
     }
+
     post {
         success {
-            echo "SUCCESS: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' completed successfully"
+            echo "✅ index.html deployed successfully"
         }
         failure {
-            echo "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' failed"
+            echo "❌ Deployment failed"
         }
     }
 }
