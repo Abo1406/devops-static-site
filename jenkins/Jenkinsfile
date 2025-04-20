@@ -5,6 +5,9 @@ pipeline {
         stage('Deploy index.html') {
             steps {
                 sh '''
+                    # Clean up any old temp directory
+                    [ -d temp ] && rm -rf temp
+
                     # Clone the repo
                     git clone https://github.com/Abo1406/devops-static-site.git temp
 
@@ -17,7 +20,7 @@ pipeline {
                     # Restart the web server
                     sudo systemctl restart httpd || sudo service httpd restart
 
-                    # Clean up
+                    # Clean up after deployment
                     rm -rf temp
                 '''
             }
